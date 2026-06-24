@@ -1,13 +1,98 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+
+model User {
+  id      String @id @default(uuid())
+  name    String
+  email   String @unique
+  password String
+  role     Role @default(EMPLOYEE)
+  movements  Movement[]
+  createdAt  DateTime @default(now())
+}
+
+
+enum Role {
+  ADMIN
+  EMPLOYEE
+}
+
+model Brand {
+  id    String @id @default(uuid())
+  name  String @unique
+  products Product[]
+}
+
+
+model Supplier {
+  id      String @id @default(uuid())
+  name    String
+  email   String?
+  phone   String?
+  products Product[]
+}
+
+
+model Product {
+  id            String   @id @default(uuid())
+  brandId       String
+  supplierId    String?
+  model         String
+  caseType      String
+  quantity      Int      @default(0)
+  minimumStock  Int      @default(0)
+  soldCount     Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  brand      Brand      @relation(fields: [brandId], references: [id])
+  supplier   Supplier?  @relation(fields: [supplierId], references: [id])
+  movements  Movement[]
+}
+
+model Movement {
+  id          String       @id @default(uuid())
+  productId   String
+  userId      String
+  type        MovementType
+  quantity    Int
+  oldQuantity Int
+  newQuantity Int
+  note        String?
+  createdAt   DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+}
+
+enum MovementType {
+  IN
+  OUT
+  ADJUST
+}
+
+model NotificationConfig {
+  id              String @id @default(uuid())
+  emailEnabled    Boolean @default(false)
+  whatsappEnabled Boolean @default(false)
+  emailTo         String?
+  whatsappTo      String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  details   Json?
+  createdAt DateTime @default(now())
 }
